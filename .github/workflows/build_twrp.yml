@@ -28,6 +28,10 @@ jobs:
       - name: Init OmniROM & Sync Source
         run: |
           mkdir workspace && cd workspace
+          # 强制将 git@github.com 重写为 https://，解决 SSH 权限报错问题
+          git config --global url."https://github.com/".insteadOf "git://github.com/"
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          
           repo init -u https://github.com/omnirom/android.git -b android-12.1 --depth=1
           repo sync -j$(nproc --all) --force-sync
 
