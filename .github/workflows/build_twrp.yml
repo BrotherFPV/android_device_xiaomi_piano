@@ -1,0 +1,53 @@
+name: Build TWRP for Piano
+
+on:
+  workflow_dispatch: # 允许你在网页上手动点击按钮触发编译
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Main
+        uses: actions/checkout@v4
+
+      - name: Free Up Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y repo git curl wget
+
+      - name: Init OmniROM & Sync Source
+        run: |
+          mkdir workspace && cd workspace
+          repo init -u https://github.com/omnirom/android.git -b android-12.1 --depth=1
+          repo sync -j$(nproc --all) --force-sync
+
+      - name: Clone Device Tree
+        run: |
+          cd workspace
+          mkdir -p device/xiaomi
+          # 克隆你的 piano 设备树仓库
+          git clone https://github.com/BrotherFPV/android_device_xiaomi_piano.git device/xiaomi/piano
+
+      - name: Start Building TWRP
+        run: |
+          cd workspace
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch omni_piano-eng
+          mka recoveryimage
+
+      - name: Upload Recovery Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-piano
+          path: workspace/out/target/product/piano/recovery.img
