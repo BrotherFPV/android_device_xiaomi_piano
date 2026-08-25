@@ -1,7 +1,7 @@
 name: Build TWRP for Piano
 
 on:
-  workflow_dispatch: # 允许你在网页上手动点击按钮触发编译
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,21 +25,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y repo git curl wget
 
-      - name: Init OmniROM & Sync Source
+      - name: Init TWRP Manifest & Sync Source
         run: |
           mkdir workspace && cd workspace
-          # 强制将 git@github.com 重写为 https://，解决 SSH 权限报错问题
-          git config --global url."https://github.com/".insteadOf "git://github.com/"
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          
-          repo init -u https://github.com/omnirom/android.git -b android-12.1 --depth=1
+          # 使用 TeamWin 的 android-12.1 精简树，专为编译 recovery 设计
+          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-12.1 --depth=1
           repo sync -j$(nproc --all) --force-sync
 
       - name: Clone Device Tree
         run: |
           cd workspace
           mkdir -p device/xiaomi
-          # 克隆你的 piano 设备树仓库
+          # 将你的 piano 设备树克隆到源码中
           git clone https://github.com/BrotherFPV/android_device_xiaomi_piano.git device/xiaomi/piano
 
       - name: Start Building TWRP
