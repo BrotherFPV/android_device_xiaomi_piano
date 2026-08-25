@@ -23,7 +23,9 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y repo git curl wget build-essential ccache zip opendir-tools libssl-dev
+          sudo apt-get install -y \
+            repo git curl wget build-essential ccache zip \
+            libssl-dev libgl1-mesa-dev python3 python-is-python3
 
       - name: Init AOSP-TWRP Manifest & Sync Source
         run: |
@@ -91,3 +93,4 @@ jobs:
           commit_message: "🤖 Auto-upload built recovery images for piano"
           branch: main
           file_pattern: "built_images/*"
+
