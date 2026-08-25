@@ -6,71 +6,78 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
-      - name: Checkout Main
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      - name: Free Up Disk Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
+    - name: Free Up Disk Space
+      uses: jlumbroso/free-disk-space-action@main
+      with:
+        tool-cache: false
+        android: true
+        dotnet: false
+        haskell: false
+        large-packages: false
+        docker-images: false
 
-      - name: Install Build Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y repo git curl wget
+    - name: Install Build Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y aria2 bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc yasm zip zlib1g-dev
 
-      - name: Init AOSP-TWRP Manifest & Sync Source
-        run: |
-          mkdir workspace && cd workspace
-          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1 --depth=1
-          repo sync -j$(nproc --all) --force-sync
+    - name: Initialize AOSP-TWRP Manifest & Sync Source
+      run: |
+        mkdir -p workspace
+        cd workspace
+        repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-15.0
+        repo sync -j$(nproc --all) --force-sync
 
-      - name: Clone and Place Device Tree
-        run: |
-          cd workspace
-          # 1. 克隆到临时目录
-          git clone https://github.com/BrotherFPV/android_device_xiaomi_piano.git temp_tree
-          
-          # 2. 创建源码中的目标设备树目录
-          mkdir -p device/xiaomi/piano
-          
-          # 3. 将仓库中嵌套的 xiaomi/piano 下的所有文件复制到源码目标位置
-          cp -r temp_tree/xiaomi/piano/* device/xiaomi/piano/
-          
-          # 4. 清理临时目录
-          rm -rf temp_tree
-
-      - name: Start Building TWRP
-        run: |
-          cd workspace
-          export ALLOW_MISSING_DEPENDENCIES=true
-          source build/envsetup.sh
-          lunch omni_piano-eng
-          mka recoveryimage
-
-      
-      - name: Copy and Organize Images to Repository Root
-        run: |
-          # 1. 在当前仓库根目录下创建一个存放编译结果的文件夹
-          mkdir -p built_images/piano
+    - name: Clone and Place Device Tree
+      run: |
+        # 1. 在临时目录克隆你的设备树仓库
+        git clone https://github.com/BrotherFPV/android_device_xiaomi_piano.git temp_tree
         
-          # 2. 把编译出来的关键镜像复制过去（如果找不到recovery就找找看有没有其他img）
-          cp -fv workspace/out/target/product/piano/recovery.img built_images/piano/ 2>/dev/null || true
-          cp -fv workspace/out/target/product/piano/boot.img built_images/piano/ 2>/dev/null || true
-          cp -fv workspace/out/target/product/piano/*.img built_images/piano/ 2>/dev/null || true
+        # 2. 在源码的 device/xiaomi/ 目录下创建目标文件夹
+        mkdir -p workspace/device/xiaomi/piano
         
-          # 3. 打印复制结果，确认里面有文件
-          ls -l built_images/piano/
+        # 3. 将仓库中的所有文件复制到源码目标位置
+        cp -r temp_tree/* workspace/device/xiaomi/piano/
+        
+        # 4. 清理临时目录
+        rm -rf temp_tree
 
-      - name: Commit and Push Built Images Back to Repository
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "🤖 Auto-upload built recovery images for piano"
-          branch: main
-          file_pattern: "built_images/*"
+    - name: Start Building TWRP
+      run: |
+        cd workspace
+        export ALLOW_MISSING_DEPENDENCIES=true
+        source build/envsetup.sh
+        lunch omni_piano-eng
+        mka recoveryimage
+
+    - name: Traverse and List All Output Files (Diagnostic)
+      if: always()
+      run: |
+        echo "=== 1. 检查 workspace/out 目录是否存在 ==="
+        if [ -d "workspace/out" ]; then
+          echo "out 目录存在，开始全局搜索所有的 .img 文件："
+          find workspace/out -name "*.img"
+          
+          echo "=== 2. 递归打印 out 目录下的所有文件结构（限深3层） ==="
+          find workspace/out -maxdepth 3 -print
+        else
+          echo "错误：workspace/out 目录根本不存在！说明编译过程没有产出任何内容。"
+        fi
+        
+        echo "=== 3. 检查设备树是否成功放到了源码中 ==="
+        ls -la workspace/device/xiaomi/piano/ || echo "piano 目录不存在"
+
+    - name: Upload All Generated Images (Artifacts)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: twrp-piano-all-images
+        path: |
+          workspace/out/target/product/piano/**/*.img
+          workspace/out/**/*.img
+        if-no-files-found: warn
