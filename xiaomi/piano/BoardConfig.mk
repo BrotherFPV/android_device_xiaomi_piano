@@ -46,10 +46,10 @@ TARGET_KERNEL_CONFIG := piano_defconfig
 TARGET_KERNEL_SOURCE := kernel/xiaomi/piano
 
 # Kernel - prebuilt
-TARGET_FORCE_PREBUILT_KERNEL := true
-ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
-TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
-endif
+TARGET_FORCE_PREBUILT_KERNEL := false
+# ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
+# TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
+# endif
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 104857600
