@@ -58,4 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: recovery-piano
-          path: workspace/out/target/product/piano/recovery.img
+          path: |
+            workspace/out/target/product/piano/*.img
+            workspace/out/target/product/piano/recovery.img
+            workspace/out/target/product/piano/boot.img
