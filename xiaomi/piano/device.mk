@@ -33,3 +33,17 @@ PRODUCT_PACKAGES += \
     update_engine \
     update_verifier \
     update_engine_sideload
+
+# --- TWRP 恢复端必要组件 ---
+PRODUCT_PACKAGES += \
+    recovery \
+    twres \
+    libgui_twrp \
+    twrp \
+    toolbox_twrp
+
+# --- 动态分区与fastbootd支持 (Sun 平台需要) ---
+PRODUCT_PACKAGES += \
+    fastbootd \
+    android.hardware.fastboot@1.0-impl \
+    android.hardware.fastboot@1.0-service
