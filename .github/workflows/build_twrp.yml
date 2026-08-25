@@ -51,7 +51,7 @@ jobs:
           cd workspace
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
-          lunch twrp_piano-eng || lunch omni_piano-eng
+          lunch omni_piano-eng
           mka recoveryimage
 
       - name: Upload Recovery Image
