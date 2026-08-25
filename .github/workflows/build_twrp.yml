@@ -20,7 +20,6 @@ jobs:
           large-packages: true
           docker-images: true
 
-      # 增加 12GB Swap 虚拟内存，防止 C++ 编译/链接阶段 OOM 崩溃
       - name: Set up Swap Space
         run: |
           sudo swapoff -a
@@ -44,28 +43,40 @@ jobs:
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1 --depth=1
           repo sync -j$(nproc --all) --force-sync
 
-      - name: Clone and Place Device Tree
+      - name: Clone and Correctly Place Device Tree
         run: |
           cd workspace
-          # 1. 克隆到临时目录
-          git clone https://github.com/BrotherFPV/android_device_xiaomi_piano.git temp_tree
-          
-          # 2. 创建源码中的目标设备树目录
+          rm -rf device/xiaomi/piano
           mkdir -p device/xiaomi/piano
           
-          # 3. 将仓库中嵌套的 xiaomi/piano 下的所有文件复制到源码目标位置
-          cp -r temp_tree/xiaomi/piano/* device/xiaomi/piano/
+          # 克隆设备树仓库
+          git clone https://github.com/BrotherFPV/android_device_xiaomi_piano.git temp_tree
           
-          # 4. 清理临时目录
+          # 自动判定并复制：如果仓库内嵌套了 xiaomi/piano 目录则复制内层，否则复制根目录
+          if [ -d "temp_tree/xiaomi/piano" ]; then
+            cp -r temp_tree/xiaomi/piano/* device/xiaomi/piano/
+          else
+            cp -r temp_tree/* device/xiaomi/piano/
+          fi
+          
+          # 清理临时克隆目录及内部 git 记录
           rm -rf temp_tree
+          rm -rf device/xiaomi/piano/.git
+          
+          echo "=== 设备树文件结构确认 ==="
+          ls -la device/xiaomi/piano/
 
       - name: Start Building TWRP Recovery
         run: |
           cd workspace
           export ALLOW_MISSING_DEPENDENCIES=true
+          export TW_DEFAULT_LANGUAGE="zh_CN"
+          
           source build/envsetup.sh
+          
+          # 使用设备树中实际定义的 omni_piano-eng 目标
           lunch omni_piano-eng
-          # 限制编译并行数为 2~4，搭配 12G Swap 避免 OOM 崩溃
+          
           mka recoveryimage -j2
 
       - name: Traverse and List All Output Files
@@ -81,22 +92,14 @@ jobs:
           else
             echo "错误：workspace/out 目录不存在！说明编译过程未产生输出。"
           fi
-        
-          echo "=== 3. 检查设备树是否正确放置 ==="
-          ls -la workspace/device/xiaomi/piano/ || echo "device/xiaomi/piano 目录不存在"
 
       - name: Copy and Organize Images to Repository Root
         run: |
-          # 创建产物保存目录
           mkdir -p built_images/piano
-        
-          # 复制 recovery.img 及其他生成的镜像产物
           if [ -d "workspace/out/target/product/piano" ]; then
             cp -fv workspace/out/target/product/piano/recovery.img built_images/piano/ 2>/dev/null || true
             cp -fv workspace/out/target/product/piano/*.img built_images/piano/ 2>/dev/null || true
           fi
-        
-          # 打印结果
           ls -la built_images/piano/
 
       - name: Commit and Push Built Images Back to Repository
@@ -105,4 +108,3 @@ jobs:
           commit_message: "🤖 Auto-upload built recovery images for piano"
           branch: main
           file_pattern: "built_images/*"
-
