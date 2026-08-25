@@ -20,6 +20,17 @@ jobs:
           large-packages: true
           docker-images: true
 
+      # 增加 12GB Swap 虚拟内存，防止 C++ 编译/链接阶段 OOM 崩溃
+      - name: Set up Swap Space
+        run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo fallocate -l 12G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
@@ -54,7 +65,8 @@ jobs:
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch omni_piano-eng
-          mka recoveryimage -j$(nproc --all)
+          # 限制编译并行数为 2~4，搭配 12G Swap 避免 OOM 崩溃
+          mka recoveryimage -j2
 
       - name: Traverse and List All Output Files
         if: always()
@@ -78,7 +90,7 @@ jobs:
           # 创建产物保存目录
           mkdir -p built_images/piano
         
-          # 复制 recovery.img 及其他可能的镜像产物
+          # 复制 recovery.img 及其他生成的镜像产物
           if [ -d "workspace/out/target/product/piano" ]; then
             cp -fv workspace/out/target/product/piano/recovery.img built_images/piano/ 2>/dev/null || true
             cp -fv workspace/out/target/product/piano/*.img built_images/piano/ 2>/dev/null || true
