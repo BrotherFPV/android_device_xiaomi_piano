@@ -74,7 +74,7 @@ jobs:
           
           source build/envsetup.sh
           
-          # 使用设备树中实际定义的 omni_piano-eng 目标
+          # 使用设备树中定义的 omni_piano-eng 目标
           lunch omni_piano-eng
           
           mka recoveryimage -j2
