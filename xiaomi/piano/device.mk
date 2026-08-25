@@ -6,44 +6,33 @@
 #
 
 LOCAL_PATH := device/xiaomi/piano
-# A/B
-AB_OTA_POSTINSTALL_CONFIG += \
-    RUN_POSTINSTALL_system=true \
-    POSTINSTALL_PATH_system=system/bin/otapreopt_script \
-    FILESYSTEM_TYPE_system=ext4 \
-    POSTINSTALL_OPTIONAL_system=true
 
-# Boot control HAL
+# 基础权限与属性
 PRODUCT_PACKAGES += \
-    android.hardware.boot@1.0-impl \
-    android.hardware.boot@1.0-service
+    vndservicemanager
 
-PRODUCT_PACKAGES += \
-    bootctrl.sun
-
-# PRODUCT_STATIC_BOOT_CONTROL_HAL := \
-   # bootctrl.sun \
-   # libgptutils \
-   # libz \
-   # libcutils
-
-PRODUCT_PACKAGES += \
-    otapreopt_script \
-    cppreopts.sh \
-    update_engine \
-    update_verifier \
-    update_engine_sideload
-
-# --- TWRP 恢复端必要组件 ---
+# --- TWRP 核心及界面组件 ---
 PRODUCT_PACKAGES += \
     recovery \
     twres \
     libgui_twrp \
     twrp \
-    toolbox_twrp
+    toolbox_twrp \
+    magiskboot
 
-# --- 动态分区与fastbootd支持 (Sun 平台需要) ---
+# --- 存储与加密支持 (根据需要保留) ---
 PRODUCT_PACKAGES += \
-    fastbootd \
-    android.hardware.fastboot@1.0-impl \
-    android.hardware.fastboot@1.0-service
+    e2fsck \
+    mke2fs \
+    tune2fs \
+    libext2_com_err \
+    libext2_blkid \
+    libext2_profile \
+    libext2_uuid \
+    libext2_quota \
+    libext2fs
+
+# --- 基础硬件与 Fastbootd 支持 ---
+PRODUCT_PACKAGES += \
+    fastbootd
+
