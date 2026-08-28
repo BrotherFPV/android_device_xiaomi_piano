@@ -18,9 +18,7 @@ AB_OTA_PARTITIONS += \
     product \
     system_ext \
     system
-BOARD_USES_RECOVERY_AS_BOOT := false
-BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
-TARGET_NO_RECOVERY := false
+BOARD_USES_RECOVERY_AS_BOOT := true
 
 # Architecture
 TARGET_ARCH := arm64
@@ -48,10 +46,10 @@ TARGET_KERNEL_CONFIG := piano_defconfig
 TARGET_KERNEL_SOURCE := kernel/xiaomi/piano
 
 # Kernel - prebuilt
-TARGET_FORCE_PREBUILT_KERNEL := false
-# ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
-# TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
-# endif
+TARGET_FORCE_PREBUILT_KERNEL := true
+ifeq ($(TARGET_FORCE_PREBUILT_KERNEL),true)
+TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
+endif
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 104857600
@@ -87,10 +85,9 @@ VENDOR_SECURITY_PATCH := 2099-12-31
 PLATFORM_VERSION := 16.1.0
 
 # TWRP Configuration
-TW_THEME := portrait_1080x2400
+TW_THEME := portrait_hdpi
 TW_EXTRA_LANGUAGES := true
 TW_SCREEN_BLANK_ON_BOOT := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
 TW_USE_TOOLBOX := true
 TW_INCLUDE_REPACKTOOLS := true
-
