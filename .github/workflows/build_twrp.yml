@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Free Up Disk Space
         uses: jlumbroso/free-disk-space@main
@@ -103,7 +103,7 @@ jobs:
           ls -la built_images/piano/
 
       - name: Commit and Push Built Images Back to Repository
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "🤖 Auto-upload built recovery images for piano"
           branch: main
